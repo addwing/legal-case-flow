@@ -30,6 +30,14 @@ warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
 die()  { printf '\n\033[31m✗ %s\033[0m\n' "$*"; exit 1; }
 hr()   { printf '%s\n' "────────────────────────────────────────"; }
 
+# 贴给人复制的路径：含空格就加引号，否则照抄会被 shell 拆成两个参数
+q() {
+  case "$1" in
+    *[[:space:]]*) printf "'%s'" "$1" ;;
+    *)             printf '%s' "$1" ;;
+  esac
+}
+
 usage() {
   cat <<'EOF'
 legal-case-flow —— 把七个法律可视化模块串成一条流水线的编排层。
@@ -251,8 +259,8 @@ fi
 say ""; hr
 say "装完了。开工："
 say ""
-say "  $PY $TO/$NAME/scripts/flow.py init 案件名 --title \"某某诉某某\""
-say "  $PY $TO/$NAME/scripts/flow.py next 案件名"
+say "  $(q "$PY") $(q "$TO/$NAME/scripts/flow.py") init 案件名 --title \"某某诉某某\""
+say "  $(q "$PY") $(q "$TO/$NAME/scripts/flow.py") next 案件名"
 say ""
 say "找不到角色（第七个都是「未安装」）说明只有编排层、没有上游模块，见 docs/install.md。"
 say ""

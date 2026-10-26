@@ -27,12 +27,20 @@ def die(msg, code=2):
     sys.exit(code)
 
 
+def shq(p):
+    """打印给人复制的路径：含空格就加引号，否则照抄会被 shell 拆成两个参数。"""
+    p = str(p)
+    if any(c.isspace() for c in p):
+        return "'%s'" % p
+    return p
+
+
 def py(role, script):
     """返回可粘贴的命令前缀；角色没绑上就返回 None。"""
     d = bound_dir(role)
     if not d:
         return None
-    return "python3 %s" % os.path.join(d, "scripts", script)
+    return "python3 %s" % shq(os.path.join(d, "scripts", script))
 
 
 def files_in(path):
@@ -68,7 +76,7 @@ def cmd_init(argv):
         print("已建案目录：%s" % case)
     print()
     print("把材料丢进 %s" % os.path.join(case, "材料"))
-    print("放好之后跑：python3 %s next %s" % (os.path.join(HERE, "flow.py"), case))
+    print("放好之后跑：python3 %s next %s" % (shq(os.path.join(HERE, "flow.py")), shq(case)))
     return 0
 
 
@@ -111,9 +119,9 @@ def stage_state(case):
         cmds = []
         if pipe:
             if os.path.isfile(src):
-                cmds.append("%s %s %s %s" % (pipe, cf, src, w))
+                cmds.append("%s %s %s %s" % (pipe, shq(cf), shq(src), shq(w)))
             else:
-                cmds.append('%s %s "" %s' % (pipe, cf, w))
+                cmds.append('%s %s "" %s' % (pipe, shq(cf), shq(w)))
                 cmds.append("（中间那对空引号是 sources.json 的位置，没有就留空，别删）")
         cmds.append("要简表另跑 build_brief.py → export_brief.py，见大事记 SKILL.md 的工作流一节")
         return (1, "事实底稿（已写底稿，未出交付物）",
@@ -128,8 +136,8 @@ def stage_state(case):
         h = os.path.join(HERE, "handoff.py")
         return (2, "结构 / 攻防（二选一或都做）",
                 "底稿已出交付物",
-                ["python3 %s relations %s -o %s" % (h, cf, rel),
-                 "python3 %s matrix %s -o %s" % (h, cf, mat),
+                ["python3 %s relations %s -o %s" % (shq(h), shq(cf), shq(rel)),
+                 "python3 %s matrix %s -o %s" % (shq(h), shq(cf), shq(mat)),
                  "两份都是骨架，填完再出图；骨架的待办清单会自己列出来"],
                 "relations.json / matrix-input.json")
 
@@ -146,13 +154,13 @@ def stage_state(case):
             blocks += ["—— 法律关系图：草案还没有关系 ——",
                        "把关系名与指向照录原文补进 %s（脚本不生成关系）" % rel]
             if mk:
-                blocks.append("%s %s --plan-only" % (mk, rel))
+                blocks.append("%s %s --plan-only" % (mk, shq(rel)))
         else:
             ready.append("关系图已填")
             if mk:
                 blocks += ["—— 法律关系图 ——",
-                           "%s %s --plan-only" % (mk, rel),
-                           "%s %s --out %s --shape wide" % (mk, rel, os.path.join(case, "产物", "关系图"))]
+                           "%s %s --plan-only" % (mk, shq(rel)),
+                           "%s %s --out %s --shape wide" % (mk, shq(rel), shq(os.path.join(case, "产物", "关系图")))]
     if os.path.isfile(mat):
         chk = py("adversary", "check_claims.py")
         bm = py("adversary", "build_matrix.py")
@@ -166,25 +174,25 @@ def stage_state(case):
         ready.append("对抗图%s" % ("已填" if filled else "骨架未填"))
         blocks.append("—— 庭审对抗图%s ——" % ("" if filled else "：骨架还没填"))
         if chk:
-            blocks.append("%s %s" % (chk, mat))
+            blocks.append("%s %s" % (chk, shq(mat)))
         if not filled:
             blocks.append("校验报 P1 / M1 / T2，就是程序站、成熟度、立场三项还没写")
         if bm:
-            blocks.append("%s %s %s" % (bm, mat, os.path.join(out, "庭审对抗分析表.xlsx")))
+            blocks.append("%s %s %s" % (bm, shq(mat), shq(os.path.join(out, "庭审对抗分析表.xlsx"))))
         if rm:
-            blocks.append("%s %s %s" % (rm, mat, os.path.join(out, "庭审对抗.svg")))
+            blocks.append("%s %s %s" % (rm, shq(mat), shq(os.path.join(out, "庭审对抗.svg"))))
     if blocks:
         return (2, "结构 / 攻防", "、".join(ready), blocks,
                 "relations.json / matrix-input.json；对抗图不出 -trace.json，课件里只能整张放")
 
     if not os.path.isfile(deck):
         bd = py("deck", "build.py")
-        cmds = ["%s %s --new --title %s" % (bd, os.path.join(case, "产物", "课件"), "案件汇报")] if bd else []
+        cmds = ["%s %s --new --title %s" % (bd, shq(os.path.join(case, "产物", "课件")), "案件汇报")] if bd else []
         cmds.append("把各层的 svg 与同名 -trace.json 放进 课件/assets/")
-        cmds.append("%s %s --check" % (bd, os.path.join(case, "产物", "课件")) if bd else "")
+        cmds.append("%s %s --check" % (bd, shq(os.path.join(case, "产物", "课件"))) if bd else "")
         return (3, "课件", "图都有了吗", [c for c in cmds if c], "pptx")
     return (4, "收尾", "各层产物齐了",
-            ["%s %s" % (py("deck", "build.py"), os.path.join(case, "产物", "课件"))
+            ["%s %s" % (py("deck", "build.py"), shq(os.path.join(case, "产物", "课件")))
              if py("deck", "build.py") else "（课件模块未绑定）"],
             "")
 
