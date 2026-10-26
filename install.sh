@@ -13,7 +13,7 @@ set -u
 
 SELF_DIR=$(cd "$(dirname "$0")" && pwd)
 NAME="legal-case-flow"
-PKG_VERSION="1.0.0"
+PKG_VERSION="1.0.1"
 STAMP=$(date +%Y%m%d-%H%M%S)
 
 TO=""

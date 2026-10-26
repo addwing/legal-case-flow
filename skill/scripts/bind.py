@@ -139,6 +139,11 @@ def main(argv):
         if a == "--roots" and i + 1 < len(argv):
             given = argv[i + 1]
     result, roots = bind(caps, given)
+    self_root = os.path.dirname(os.path.dirname(HERE))
+    def outside(entry):
+        """绑到的模块不在本技能旁边 = 是从别的目录搜来的，可能不是你刚装的那一份。"""
+        src = entry.get("source")
+        return bool(src) and src != "覆盖" and os.path.abspath(src) != self_root
     check = "--check" in argv
     plan = "--plan" in argv
     as_json = "--json" in argv
@@ -155,28 +160,43 @@ def main(argv):
             print("  " + r)
         print()
         print("阶段  角色        状态     模块 / 版本")
+        any_out = False
         for role in sorted(result.values(), key=lambda e: (e["stage"], e["role"])):
             if role["status"] == "bound":
-                print("  %s   %s已绑   %s %s" % (role["stage"], pad(role["role"], 12),
-                                              os.path.basename(role["dir"]), role["version"] or ""))
+                ext = ""
+                if outside(role):
+                    ext = "  ← 外部"
+                    any_out = True
+                print("  %s   %s已绑   %s %s%s" % (role["stage"], pad(role["role"], 12),
+                                               os.path.basename(role["dir"]), role["version"] or "", ext))
             elif role["status"] == "broken":
                 print("  %s   %s探测不过  %s" % (role["stage"], pad(role["role"], 12),
                                             "；".join(role["reasons"])))
             else:
                 print("  %s   %s未安装  （这一阶段跳过）" % (role["stage"], pad(role["role"], 12)))
         print()
+        if any_out:
+            print("← 外部：这个模块不在本技能旁边，是从上面某个搜索根里搜来的。")
+            print("  换机器或装在别处时，加 --roots <刚装的那个目录> 只看那一个根。")
+            print()
         for role in sorted(result.values(), key=lambda e: (e["stage"], e["role"])):
             if role["status"] == "bound":
                 print("· %s → %s" % (role["label"], caps["roles"][role["role"]].get("next", "")))
     else:
         print("搜索根：%s" % ("、".join(roots) if roots else "（没有可用的技能目录）"))
         print()
+        any_out = False
         for role in sorted(result.values(), key=lambda e: (e["stage"], e["role"])):
             mark = {"bound": "OK  ", "broken": "坏  ", "missing": "缺  "}[role["status"]]
             where = os.path.basename(role["dir"]) if role["dir"] else "—"
             ver = role["version"] or ""
             note = "" if role["status"] == "bound" else "：" + "；".join(role["reasons"] or ["没找到候选目录"])
+            if role["status"] == "bound" and outside(role):
+                note = "  ← 外部"
+                any_out = True
             print("%s %s%s %s%s%s" % (mark, pad(role["role"], 12), pad(role["label"], 20), pad(where, 34), ver, note))
+        if any_out:
+            print("\n← 外部：这些模块不在本技能旁边，是从上面某个搜索根里搜来的。")
         if os.path.isfile(OVERRIDE):
             print("\n（已叠加覆盖文件 %s）" % OVERRIDE)
 

@@ -8,7 +8,7 @@
 ## 一、git clone（推荐）
 
 ```bash
-git clone https://github.com/<你的账号>/legal-case-flow.git
+git clone https://github.com/addwing/legal-case-flow.git
 cd legal-case-flow
 ./install.sh --dry-run          # 先看它要干什么
 ./install.sh                    # 真装
@@ -18,11 +18,12 @@ cd legal-case-flow
 
 ## 二、没有 git：下 Release 包
 
- Releases 页下载 `legal-case-flow-1.0.0.tar.gz`，解开后同样两条命令：
+到 [Releases 页](https://github.com/addwing/legal-case-flow/releases/latest) 下载
+`legal-case-flow-<版本>.tar.gz`，解开后同样两条命令：
 
 ```bash
-tar xzf legal-case-flow-1.0.0.tar.gz
-cd legal-case-flow-1.0.0
+tar xzf legal-case-flow-1.0.1.tar.gz
+cd legal-case-flow-1.0.1
 ./install.sh
 ```
 
@@ -30,7 +31,7 @@ cd legal-case-flow-1.0.0
 `install.sh` 会自己清一次；如果连脚本都被拦住进不去，先手工：
 
 ```bash
-xattr -dr com.apple.quarantine legal-case-flow-1.0.0.tar.gz
+xattr -dr com.apple.quarantine legal-case-flow-1.0.1.tar.gz
 ```
 
 ## 三、给同事一份（他那边已装过上游模块）
@@ -87,6 +88,9 @@ xattr -dr com.apple.quarantine legal-case-flow-1.0.0.tar.gz
 什么都不用做，`bind.py --plan` 会自己认出来。
 
 **B. 从本仓库的 Release 附件装**
+
+在 [Releases 页](https://github.com/addwing/legal-case-flow/releases/latest) 下载
+`legal-case-modules-1.0.0.tar.gz`（约 1.6 MB，七个模块原样打包），然后：
 
 ```bash
 ./install.sh --modules ~/Downloads/legal-case-modules-1.0.0.tar.gz

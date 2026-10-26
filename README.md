@@ -36,14 +36,14 @@
 ## 安装
 
 ```bash
-git clone https://github.com/<你的账号>/legal-case-flow.git
+git clone https://github.com/addwing/legal-case-flow.git
 cd legal-case-flow
 ./install.sh
 ```
 
 零依赖、不需要 `sudo`、不联网装包。装完自动跑三段验证。
 
-- 没有 git？下 Release 包，解开后同样 `./install.sh`
+- 没有 git？下 [Release 包](https://github.com/addwing/legal-case-flow/releases/latest)，解开后同样 `./install.sh`
 - 装到 Claude Code？`./install.sh --to ~/.claude/skills`
 - 只想看看它要干什么？`./install.sh --dry-run`
 - 卸掉？`./install.sh --uninstall`（会自动恢复最近一次备份）
