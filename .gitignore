@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+._*
+.localized
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 安装器产生的备份与临时文件
+.backup-*/
+*.log
+*.tmp
+
+# 分发包（走 Releases，不入库）
+dist/
+*.tar.gz
+!docs/*.tar.gz
+
+# 编辑器
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,38 @@
+# 第三方声明 / Third-Party Notices
+
+本仓库（legal-case-flow 编排层）以 MIT 许可发布，见 `LICENSE`。
+
+本仓库**不包含**下列第三方作品，但设计与测试以其为对接目标。它们由各自的作者
+独立发布，版权归原作者，同样以 MIT 许可授权。若你通过本仓库的 Release 附件
+`legal-case-modules-*.tar.gz` 获取它们，该压缩包内每个模块的 `SKILL.md`
+均保留其原始的 `metadata.author` 与 `metadata.license` 声明，请一并遵守。
+
+| 模块目录 | 角色 | 版本 | 作者 | 许可 |
+| --- | --- | --- | --- | --- |
+| `mqc-chronicle-master` | facts（事实底稿 / 大事记） | 1.0.0 | 缪奇川（SKILL.md 已标注） | MIT |
+| `mqc-legal-relation-master` | structure（法律关系图） | 1.0.0 | 未在 SKILL.md 标注 | MIT |
+| `mqc-trial-confrontation-master` | adversary（庭审对抗图） | 1.0.0 | 缪奇川（SKILL.md 已标注） | MIT |
+| `mqc-timeline-master` | chronology（案件时间轴） | 2.1.0 | 缪奇川（SKILL.md 已标注） | MIT |
+| `mqc-legal-chart-master` | data（法律数据图） | 0.9.8 | 未在 SKILL.md 标注 | MIT |
+| `mqc-legal-courseware-master` | deck（法律课件） | 0.8.4 | 未在 SKILL.md 标注 | MIT |
+| `mqc-litigation-visual-redraw` | redraw（重画既有图） | 1.1.0 | 缪奇川（`LICENSE` 文件署名） | MIT |
+
+> 「未在 SKILL.md 标注」的三个，其 `metadata` 里只有版本号、没有 `author` 字段。
+> 它们与其余四个同属一个系列（同一套 tags、同一套「庭前三大法宝」命名），
+> 但**本仓库不替作者补署名**。若你是权利人并希望写入，请开 issue。
+
+## 我们做了什么、没做什么
+
+- **没做**：没有修改上游任何一个字节，没有合并上游代码，没有把上游的内部函数
+  当成自己的 API。编排层只读它们的**命令行与产物文件**。
+- **做了**：提供角色探测（`bind.py`）、两处机械转接（`handoff.py`）、
+  打包校验（`pack.py`）、案件状态机（`flow.py`）、macOS 原生替身（`native.py`）。
+- **不代管版本**：上游更新与我们无关；我们不锁定、不 fork、不打补丁。
+
+## 上游许可文本
+
+`mqc-litigation-visual-redraw` 目录内自带 `LICENSE`（MIT，
+Copyright (c) 2026 缪奇川）。其余模块的许可声明写在其 `SKILL.md` 的
+`metadata.license: MIT` 一行，分发时该文件随包保留，声明因此不丢失。
+
+如果你是该模块的作者并希望调整署名方式，请开 issue，我们会改。

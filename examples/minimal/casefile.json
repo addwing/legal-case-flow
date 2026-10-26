@@ -1,0 +1,147 @@
+{
+  "schema": "mqc-casefile/1",
+  "case": {
+    "cid": "c-demo-0001",
+    "title": "甲公司诉乙公司买卖合同纠纷",
+    "program": "示例，全案虚构",
+    "generated_by": "examples/minimal（人工编写，仅用于演示字段）",
+    "generated_at": "2026-10-26"
+  },
+  "materials": [
+    {
+      "mid": "M01",
+      "name": "产品买卖合同（示例）",
+      "medium": "document",
+      "pages": 4,
+      "submitted_by": null,
+      "evidence_prefix": null
+    },
+    {
+      "mid": "M02",
+      "name": "送货单与签收记录（示例）",
+      "medium": "scan",
+      "pages": 12,
+      "submitted_by": null,
+      "evidence_prefix": "证"
+    },
+    {
+      "mid": "M03",
+      "name": "催款函及快递底单（示例）",
+      "medium": "scan",
+      "pages": 2,
+      "submitted_by": null,
+      "evidence_prefix": "证"
+    }
+  ],
+  "parties": [
+    {
+      "pid": "P1",
+      "name": "甲公司",
+      "aliases": ["原告", "出卖人"],
+      "roles_verbatim": ["原告"],
+      "source": ["F001"]
+    },
+    {
+      "pid": "P2",
+      "name": "乙公司",
+      "aliases": ["被告", "买受人"],
+      "roles_verbatim": ["被告"],
+      "source": ["F001"]
+    },
+    {
+      "pid": "P3",
+      "name": "丙（乙公司经办人）",
+      "aliases": ["经办人"],
+      "roles_verbatim": ["第三人（未列）"],
+      "source": ["F003"]
+    }
+  ],
+  "issues": [],
+  "facts": [
+    {
+      "fid": "F001",
+      "date": "2024-03-11",
+      "date_certainty": "exact",
+      "item": "签订买卖合同",
+      "content": "甲公司与乙公司签订《产品买卖合同》，约定甲公司向乙公司供应门板 2000 套，总价 820000 元，货到验收后 30 日内付款。",
+      "parties": ["P1", "P2"],
+      "mid": "M01",
+      "locator": "第 1 页",
+      "evidence_no": "证1",
+      "iid": null,
+      "relations": [],
+      "evidence_status": "有书证",
+      "new_evidence": false
+    },
+    {
+      "fid": "F002",
+      "date": "2024-04-02",
+      "date_certainty": "exact",
+      "item": "第一批送货并签收",
+      "content": "甲公司送货 1200 套，乙公司经办人丙在送货单上签字确认「数量无误」。",
+      "parties": ["P1", "P2", "P3"],
+      "mid": "M02",
+      "locator": "第 1-3 页",
+      "evidence_no": "证2",
+      "iid": null,
+      "relations": [],
+      "evidence_status": "有书证",
+      "new_evidence": false
+    },
+    {
+      "fid": "F003",
+      "date": "2024-05-20",
+      "date_certainty": "exact",
+      "item": "第二批送货，签收人存疑",
+      "content": "甲公司送货 800 套，送货单签收处写「丙」字，但字迹与 F002 不一致；乙公司否认收到该批货物。",
+      "parties": ["P1", "P2"],
+      "mid": "M02",
+      "locator": "第 8-12 页",
+      "evidence_no": "证3",
+      "iid": null,
+      "relations": [],
+      "evidence_status": "有书证，签收人身份待核",
+      "new_evidence": false
+    },
+    {
+      "fid": "F004",
+      "date": "2024-08-15",
+      "date_certainty": "exact",
+      "item": "发出催款函",
+      "content": "甲公司向乙公司注册地址寄出催款函，要求支付货款 820000 元，快递底单显示「已签收」。",
+      "parties": ["P1", "P2"],
+      "mid": "M03",
+      "locator": "第 1-2 页",
+      "evidence_no": "证4",
+      "iid": null,
+      "relations": [],
+      "evidence_status": "有书证",
+      "new_evidence": false
+    },
+    {
+      "fid": "F005",
+      "date": "2024-09-02",
+      "date_certainty": "month",
+      "item": "乙公司回函拒付",
+      "content": "乙公司回函称「只收到 1200 套，其余未收」，拒绝支付全款。回函落款只有月份，无日期。",
+      "parties": ["P2", "P1"],
+      "mid": "M03",
+      "locator": "第 2 页背面",
+      "evidence_no": "证5",
+      "iid": null,
+      "relations": [],
+      "evidence_status": "有书证，落款日期不完整",
+      "new_evidence": false
+    }
+  ],
+  "uncertainties": [
+    {
+      "uid": "U01",
+      "about": "F003",
+      "note": "第二批签收人是否为丙本人，需比对笔迹或调取监控；示例中保留为未定项。"
+    }
+  ],
+  "arithmetic_notes": [
+    "总价 820000 元 = 2000 套 × 410 元/套（示例数值，仅用于演示）。"
+  ]
+}

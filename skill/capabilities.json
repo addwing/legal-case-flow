@@ -1,0 +1,133 @@
+{
+  "schema": "legal-case-flow/capabilities@1",
+  "note": "这张表是编排层唯一认人的地方。换模块、换作者、换版本，只改这一份，脚本与 SKILL.md 都不用动。",
+  "search_roots": [
+    "~/.workbuddy/skills",
+    "~/.claude/skills",
+    "~/.codex/skills",
+    "./.workbuddy/skills",
+    "./.claude/skills",
+    "./skills"
+  ],
+  "platform": {
+    "prefer": "darwin-native-first",
+    "note": "mac 上先走系统自带；下面这张表之外才轮到 fallback。可执行版是同目录 scripts/native.py。",
+    "native": {
+      "svg_to_png": "sips -s format png 图.svg --out 图.png",
+      "svg_to_png_large": "native.py svg2png 图.svg 图.png --size 2400",
+      "pdf_pages": "native.py pdfpages 卷.pdf",
+      "pdf_text": "native.py pdftext 卷.pdf [-o x.txt] [--page N]",
+      "pdf_first_page_png": "sips -s format png --resampleWidth 1600 卷.pdf --out 页1.png",
+      "docx_text": "textutil -convert txt -output 材料.txt 材料.docx",
+      "copy_tree": "ditto 源 目标",
+      "unquarantine": "xattr -dr com.apple.quarantine 目录",
+      "clean_junk": "native.py clean 目录"
+    },
+    "fallback": {
+      "poppler": "只有扫描件逐页栅格化（pdftoppm）才需要，mac 上唯一真缺口",
+      "soffice": "SVG 转 PNG 的老路，mac 上用 sips，不必装",
+      "cairosvg_pypdf_openpyxl_docx": "上游脚本自己 import 的库，装进 venv；openpyxl 不能省"
+    }
+  },
+  "roles": {
+    "facts": {
+      "label": "事实底稿（大事记）",
+      "stage": 1,
+      "candidates": ["mqc-chronicle-master"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-chronicle-master",
+        "scripts": ["scripts/ingest.py", "scripts/check_facts.py", "scripts/to_render.py"]
+      },
+      "emits": ["casefile.json", "Word 交付版", "Excel 母表", "A4 简表"],
+      "next": "structure 读 casefile.json 的 F 编号；chronology 拿它做对照"
+    },
+    "chronology": {
+      "label": "时间轴（按需旁路）",
+      "stage": 2,
+      "candidates": ["mqc-timeline-master"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-timeline-master",
+        "scripts": ["scripts/pipeline.py", "scripts/read_image.py"]
+      },
+      "emits": ["svg", "png", "pptx", "vsdx", "drawio", "-trace.json"],
+      "next": "只在期间型 / 双泳道对读时启动；产物连同 -trace.json 一起进 deck"
+    },
+    "structure": {
+      "label": "法律关系图",
+      "stage": 2,
+      "candidates": ["mqc-legal-relation-master"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-legal-relation-master",
+        "scripts": ["scripts/make.py", "scripts/ask.py"]
+      },
+      "emits": ["relations.json 渲染", "svg", "pptx", "vsdx", "drawio", "-trace.json"],
+      "next": "打 wide 版才进 deck；主体与关系名照录，不归并"
+    },
+    "adversary": {
+      "label": "庭审对抗图",
+      "stage": 2,
+      "candidates": ["mqc-trial-confrontation-master"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-trial-confrontation-master",
+        "scripts": ["scripts/check_claims.py", "scripts/build_matrix.py", "scripts/render_main.py"]
+      },
+      "emits": ["matrix-input.json 渲染", "svg", "png", "xlsx 分析表"],
+      "next": "不出 -trace.json，deck 里只能整张放；不对法院出示"
+    },
+    "data": {
+      "label": "法律数据图",
+      "stage": 3,
+      "candidates": ["mqc-legal-chart-master"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-legal-chart-master",
+        "scripts": ["scripts/make.py", "scripts/cases.py"]
+      },
+      "emits": ["svg", "pptx", "png", "module.json"],
+      "next": "一批判决或逐件登记表才上；单案通常用不上"
+    },
+    "deck": {
+      "label": "课件（容器）",
+      "stage": 3,
+      "candidates": ["mqc-legal-courseware-master"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-legal-courseware-master",
+        "scripts": ["scripts/build.py", "scripts/studio.py"]
+      },
+      "emits": ["pptx", "deck.json"],
+      "next": "assets/ 只收 SVG 与 -trace.json；不改上游任何模块"
+    },
+    "redraw": {
+      "label": "重画既有图",
+      "stage": 3,
+      "candidates": ["mqc-litigation-visual-redraw"],
+      "probe": {
+        "skill_md": "SKILL.md",
+        "name_field": "mqc-litigation-visual-redraw",
+        "scripts": ["scripts/render.py"]
+      },
+      "emits": ["svg", "png"],
+      "next": "只接外部旧图；V2/V3 的产物不要再回炉，几何会掉"
+    }
+  },
+  "contracts": {
+    "casefile": {
+      "schema_const": "mqc-casefile/1",
+      "required": ["case.cid", "case.title", "materials[].mid", "parties[].pid", "facts[].fid"],
+      "policy": "只读上面这些字段，其余一律忽略；上游加字段不报错"
+    },
+    "relations": {
+      "required": ["nodes[].id", "nodes[].name", "nodes[].kind", "edges[].from", "edges[].to", "edges[].label"],
+      "policy": "kind 只有主体 / 客体；edge 的 label 照录原文，不改写"
+    },
+    "matrix": {
+      "required": ["case.title", "case.stance", "claims[]", "parts[].claim_bases[].elements[]"],
+      "policy": "四段正文照录；条号案号不编造"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+# 统一换行，避免 Windows 协作时 shell 脚本带上 CRLF 跑不起来
+* text=auto eol=lf
+
+*.sh        text eol=lf
+*.py        text eol=lf
+*.md        text eol=lf
+*.json      text eol=lf
+
+# 二进制：别做换行转换，也别让 git 以为这是文本
+*.png       binary
+*.jpg       binary
+*.pdf       binary
+*.docx      binary
+*.xlsx      binary
+*.svg       text eol=lf
