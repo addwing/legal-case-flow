@@ -3,7 +3,7 @@ name: legal-case-flow
 description: 法律事务的编排层。当一个案子要把多个法律可视化模块串起来跑（事实底稿 → 法律关系图 → 庭审对抗图 → 时间轴 → 课件 → 数据图），或者不确定这次该从哪一步开始、上一步该交什么给下一步、缺了某个模块还能不能跑时使用。按能力角色探测本机已装模块并绑定，给出阶段计划与两处交接骨架；不代替任何模块干活，也不做法律判断。目标机器是 macOS，依赖一律先用系统自带的（sips / PDFKit / textutil），第三方那套只作备用。触发词：把这些技能串起来、从哪一步开始、案件的图怎么排、大事记接关系图、编排、pipeline、工作流、移植到 mac。
 tags: [legal, orchestration, pipeline, 编排, 交接, macos]
 metadata:
-  version: 0.2.0
+  version: 1.0.0
   upstream_policy: 只读不改，按角色探测绑定
   platform: macOS 优先，原生工具优先；Linux 那套作备用
 ---
