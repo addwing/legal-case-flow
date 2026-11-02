@@ -20,7 +20,7 @@ head_ "1. 仓库结构"
 for f in README.md LICENSE NOTICE CHANGELOG.md install.sh .gitignore \
          skill/SKILL.md skill/capabilities.json \
          skill/scripts/bind.py skill/scripts/handoff.py skill/scripts/pack.py \
-         skill/scripts/flow.py skill/scripts/native.py \
+         skill/scripts/flow.py skill/scripts/native.py skill/scripts/svg_marker.py \
          docs/install.md docs/usage.md docs/commands.md docs/architecture.md \
          docs/macos-native.md docs/troubleshooting.md \
          examples/minimal/casefile.json examples/minimal/README.md \
@@ -118,6 +118,27 @@ fi
 head_ "9. 本机原生通路（仅 macOS）"
 if [ "$(uname -s)" = "Darwin" ]; then
   if "$PY" "$REPO/skill/scripts/native.py" check >/dev/null 2>&1; then ok "native.py check"; else bad "native.py check 失败"; fi
+
+  # marker 展开器是这次的核心修复：sips 不认 <marker>，必须自己补。
+  T9=$(mktemp -d)
+  cat > "$T9/a.svg" <<'SVGEOF'
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80">
+  <defs><marker id="m" markerWidth="12" markerHeight="12" refX="0" refY="6"
+      orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L12,6 L0,12 Z" fill="#000"/></marker></defs>
+  <line x1="10" y1="40" x2="150" y2="40" stroke="#000" marker-end="url(#m)"/>
+</svg>
+SVGEOF
+  if "$PY" "$REPO/skill/scripts/svg_marker.py" "$T9/a.svg" "$T9/b.svg" 2>/dev/null | grep -q "1"; then
+    if grep -q 'marker-end' "$T9/b.svg"; then
+      bad "展开后没去掉 marker-end（会重复画）"
+    else
+      ok "marker 展开：1 个箭头转成真实图形"
+    fi
+  else
+    bad "marker 展开失败"
+  fi
+  rm -rf "$T9"
 else
   printf '  \033[33m·\033[0m 非 macOS，跳过（原生那套只在 mac 上成立）\n'
 fi

@@ -211,21 +211,28 @@ def cmd_doctor():
             print("  ！ PDF 通路：%s" % why)
         else:
             print("  OK  PDF 通路实测：PDFKit 读到 %s 页、%d 字 —— 不用装 pdfinfo / pdftotext" % (pages, chars))
-        print("      出图：SVG→PNG 用 sips；首页栅格化用 sips --resampleWidth；放大才用 qlmanage")
+        print("      出图：SVG→PNG 用 sips，但 sips 不认 <marker> 箭头，得先展开——")
+        print("            用 native.py svg2png 就会自动展开；直接敲 sips 出来的是光头线")
+        print("      首页栅格化用 sips --resampleWidth；放大才用 qlmanage")
         print("      Word 取文字：textutil -convert txt（表格摊平、样式丢弃，只够读）")
         print()
 
-    print("二、mac 上也确实要装的（第三方库，装进 venv，别装系统）")
-    hard = [("openpyxl", "Excel 母表、对抗分析表"),
-            ("docx", "读 .docx 材料（python-docx）"),
-            ("pypdf", "多页简表合并成一个 PDF"),
-            ("cairosvg", "上游脚本自己出 PNG 时 import 它；只手工补图可改用 sips")]
-    miss_hard = []
-    for name, why in hard:
+    print("二、第三方 Python 库（装进 venv，别装系统）。按「缺了会怎样」分三档：")
+    hard = [("openpyxl", "Excel 母表、对抗分析表", "必需"),
+            ("cairosvg", "矢量 PDF（交法院/客户，可检索那种）", "仅矢量 PDF 时必需"),
+            ("docx", "读 .docx 材料的正文与表格", "有兜底：缺了会提示改用 .txt/.md"),
+            ("pypdf", "多页 PDF 合并", "有兜底：PDFKit 走 osascript 也能合")]
+    miss_hard, miss_req = [], []
+    for name, why, level in hard:
         ok = importlib.util.find_spec(name) is not None
-        print("  %s %s %s" % ("OK  " if ok else "缺  ", name.ljust(10), why))
+        note = "" if ok else "（%s）" % level
+        print("  %s %s %s%s" % ("OK  " if ok else "缺  ", name.ljust(10), why, note))
         if not ok:
             miss_hard.append(name)
+            if level == "必需":
+                miss_req.append(name)
+    print("      只有 openpyxl 是硬依赖，缺了 Excel 母表与对抗分析表出不来；")
+    print("      另外三个缺了只是少一种格式，脚本内部都有兜底。")
     print()
 
     print("三、备用（非 mac，或原生顶不住时才装）")
@@ -244,14 +251,18 @@ def cmd_doctor():
     if not miss_hard and not miss_soft:
         print("依赖齐备。")
         return 0
-    if miss_hard:
-        print("要补 %d 个 Python 库，一条命令：" % len(miss_hard))
-        print("  %s -m pip install %s" % (sys.executable, " ".join(
-            "python-docx" if m == "docx" else m for m in miss_hard)))
+    if miss_req:
+        print("硬依赖缺 %d 个，建议补：" % len(miss_req))
+        print("  %s -m pip install %s" % (sys.executable, " ".join(miss_req)))
         print("  用托管解释器时它就是 venv 里的 python，别加 sudo。")
+    elif miss_hard:
+        print("硬依赖齐了。其余 %d 个是可选项，缺了只是少一种格式，不影响出图与编排。"
+              % len(miss_hard))
+        print("  真要矢量 PDF 时再：%s -m pip install cairosvg" % sys.executable)
     if miss_soft:
         print("备用项缺 %d 处。mac 上先用原生路径，真要做扫描件逐页再：" % len(miss_soft))
         print("  brew install poppler     # 只有这一项值得为它装 Homebrew")
+        print("  其余（soffice / node）在 mac 上都有替代，不必为它们折腾。")
     print("这几项决定的只是「能出哪些格式」，不影响编排与探测本身。")
     return 0
 

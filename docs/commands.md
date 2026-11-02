@@ -95,11 +95,11 @@ python3 <技能>/scripts/pack.py doctor
 
 | 命令 | 作用 | 顶替谁 |
 | --- | --- | --- |
-| `check` | 原生工具清单 + 现造 PDF/SVG 实测 | — |
+| `check` | 原生工具清单 + 现造 PDF/SVG（带箭头）实测 | — |
 | `pdfpages 文件.pdf` | 页数 | `pdfinfo` |
 | `pdftext 文件.pdf [-o 输出] [--page N]` | 全文或单页文字 | `pdftotext` |
 | `doc2txt 材料.docx [-o 输出]` | 取文字（表格摊平） | python-docx（仅读文字） |
-| `svg2png 图.svg 图.png [--size 2400]` | SVG 转 PNG | cairosvg / rsvg / soffice |
+| `svg2png 图.svg 图.png [--size 2400]` | SVG 转 PNG，**先展开 marker 箭头** | cairosvg / rsvg / soffice |
 | `pdf2png 卷.pdf 目录/ [--size 1600]` | PDF **首页**栅格化 | `pdftoppm`（仅首页） |
 | `clean 目录` | 清 `.DS_Store` 与 `._` 分身 | — |
 
@@ -108,6 +108,13 @@ python3 <技能>/scripts/native.py check
 python3 <技能>/scripts/native.py svg2png 产物/时间轴/时间轴.svg /tmp/时间轴.png
 python3 <技能>/scripts/native.py pdftext 卷.pdf -o 卷.txt
 python3 <技能>/scripts/native.py clean .
+```
+
+`svg2png` 会先调同目录的 `svg_marker.py` 把 `<marker>` 展开成真实图形——`sips`
+不实现 marker，直接转，关系图的 11 个箭头会一个不剩。展开器也能单独用：
+
+```bash
+python3 <技能>/scripts/svg_marker.py 图.svg [出.svg] [--png 出.png]
 ```
 
 只在 macOS 上成立。Linux 上这些命令仍会尝试，但会失败并给出装 poppler /

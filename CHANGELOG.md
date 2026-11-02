@@ -3,6 +3,33 @@
 格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号参照 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.0.2] — 2026-11-02
+
+mac 适配报告里三条实打实的问题。前两条是我自己造的坑：把 `sips` 当成了 cairosvg 的平价替代，
+而自检用的样本是个「矩形加一行字」，测不出箭头。
+
+### 修复
+
+- **`sips` 不认 `<marker>`，关系图箭头全丢。** 实测 `mqc-legal-relation-master/examples/demo.svg`
+  （11 个 `marker-end`）直转后箭头一个不剩，线成了光头；而 `svg_geom.py` 里
+  `arrow="marker-end" in a` 正是判断「这条边有没有方向」的判据——箭头是数据，不是装饰。
+  新增 `svg_marker.py`（零依赖），按端点切线把 marker 贴成真实图形并去掉 `marker-end`，
+  `native.py svg2png` 自动调用。展开后 11 个箭头位置与朝向均正确。
+- **`sips -s format pdf` 出的是位图。** 整张图栅格化成 JPEG 塞进 PDF（`/Image 4`、`/Font 0`），
+  放大就糊、条文搜不到。文档与 `doctor` 里那句「只手工补图可改用 sips」改成准确口径：
+  **出 PNG 可以，矢量 PDF 仍必须 `cairosvg.svg2pdf`**。
+- **`check` 的自检样本换成带箭头的**，并报告展开数。原来的样本不含 marker，
+  所以 `check` 一路 OK 而真实图掉箭头——测了个寂寞。
+
+### 改进
+
+- `doctor` 的依赖清单按「缺了会怎样」分三档：`openpyxl` 必需、`cairosvg` 仅矢量 PDF 时必需、
+  `docx` / `pypdf` 有兜底。汇总行只对硬依赖给出 `pip install`，不再一口气列四个。
+- `qlmanage` 失败时不再把英文 `sandbox initialization failed` 原样丢给人看。
+- `pad()` 把 `→←↑↓⇒⇔` 当宽字符，`check` 的表格不再错位。
+- `SKILL.md`、`docs/macos-native.md`、`docs/commands.md`、`docs/troubleshooting.md`
+  同步两个坑，并把裸 `sips` 命令换成 `native.py svg2png`。
+
 ## [1.0.1] — 2026-10-26
 
 发布后当场在线上仓库实测（克隆 → 安装 → 建案 → 卸载回滚）发现的修正。都是文档与显示问题，

@@ -11,8 +11,9 @@
 
 | 要干的事 | 系统自带 | 一条命令 | 原来那套（备用） |
 | --- | --- | --- | --- |
-| SVG → PNG | `sips`（ImageIO 直接吃 SVG） | `sips -s format png 图.svg --out 图.png` | cairosvg / rsvg-convert / soffice |
+| SVG → PNG | `sips`（ImageIO 直接吃 SVG） | `native.py svg2png 图.svg 图.png` | cairosvg / rsvg-convert / soffice |
 | SVG → 更大尺寸 | `qlmanage -t -s 2400` | `native.py svg2png 图.svg 图.png --size 2400` | soffice |
+| **SVG → 矢量 PDF** | **没有** | 只能 `cairosvg.svg2pdf` | — |
 | PDF 页数 / 全文 | `osascript` + PDFKit | `native.py pdftext 卷.pdf` | pdfinfo / pdftotext |
 | PDF 首页 → PNG | `sips --resampleWidth 1600` | `native.py pdf2png 卷.pdf 目录/` | pdftoppm |
 | .docx 取文字 | `textutil` | `textutil -convert txt -output x.txt 材料.docx` | python-docx |
@@ -20,8 +21,46 @@
 | 大目录拷贝 | `ditto`（保 UTF-8 名与扩展属性） | `ditto 源 目标` | tar / rsync |
 | 被 Gatekeeper 拦 | `xattr` | `xattr -dr com.apple.quarantine 目录` | 去隐私设置点允许 |
 
-`sips` 转出来的图，中文、配色、透明背景都对，实测与原 SVG 一致。
-**这就是 mac 上出 PNG 的正路。**
+`sips` 转出来的图，中文、配色、透明背景都对——**但箭头会全丢**，见下节。
+出图请走 `native.py svg2png`，它先补箭头再交给 `sips`。
+
+---
+
+## 坑一：`sips` 不认 `<marker>`，关系图的箭头会消失
+
+这不是配置问题，是 CoreSVG 没实现 SVG 1.1 的 `<marker>` 规范。
+
+用 `mqc-legal-relation-master/examples/demo.svg`（1100×678，11 个 `marker-end`）实测：
+
+| 处理方式 | 箭头 | 其余元素 |
+| --- | --- | --- |
+| 直接 `sips -s format png` | **0 个**，11 条线全是光头 | 渐变、虚线、圆角、中文全对 |
+| 先展开 marker 再转 | 11 个，位置与朝向都对 | 同上 |
+
+而 `svg_geom.py` 里 `arrow="marker-end" in a` 正是这个技能判断「这条边有没有方向」
+的判据——箭头不是装饰，是数据。出图时抹掉它，读者会以为这些关系是无向的。
+
+所以 `native.py` 里备了一个 261 行、零依赖的 `svg_marker.py`：按端点切线把 marker
+贴成真实三角形，再删掉 `marker-end` 属性，然后交给 `sips`。`native.py svg2png`
+自动调它；也可以单独用：
+
+```bash
+python3 scripts/svg_marker.py 图.svg                  # → 图.arrows.svg
+python3 scripts/svg_marker.py 图.svg 出.svg --png 出.png
+```
+
+没有箭头的图原样返回，不产生多余文件，放进管线无副作用。
+
+## 坑二：`sips -s format pdf` 出的是位图，不是矢量
+
+```
+$ sips -s format pdf a.svg --out a.pdf
+$ python3 -c "d=open('a.pdf','rb').read(); print(d.count(b'/Image'), d.count(b'/Font'))"
+4 0
+```
+
+整张图被栅格化成一张 JPEG 塞进 PDF，文字层不存在。放大就糊、条文搜不到、复制不了。
+**交法院或客户的矢量 PDF 只能走 `cairosvg.svg2pdf`**，这一项系统自带顶不了。
 
 ---
 
@@ -80,9 +119,13 @@ mac 上的对应关系：
 python3 <技能>/scripts/native.py check
 ```
 
-它会现造一份 PDF 和一个 SVG 真跑一遍，而不是只报「命令在不在」：
+它会现造一份 PDF 和一个**带箭头的** SVG 真跑一遍，而不是只报「命令在不在」：
 
 ```
 OK  PDF 通路实测：PDFKit 读到 1 页、10 字 —— 这台机器不需要 pdfinfo / pdftotext
-OK  sips 直接转 （中文与配色都对）
+OK  箭头展开：1 个（sips 不认 <marker>，不展开直转就是一个不剩）
+OK  sips 出图：200×80，中文与配色都对
 ```
+
+样本为什么特意带箭头：以前用「一个矩形加一行字」当样本，`check` 一路报 OK，
+真实关系图一过手箭头全掉——测了个寂寞。

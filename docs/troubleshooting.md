@@ -79,6 +79,18 @@ echo '{"facts": "/绝对/路径/mqc-chronicle-master"}' > ~/.legal-case-flow/bin
 
 ## 出图与读文件
 
+### 关系图转出来没有箭头，线是光头
+
+用了裸 `sips`。`sips` 不实现 SVG 的 `<marker>`，而关系图、对抗图、重画模块的方向
+全靠 `marker-end`——一张 11 条边的图，箭头一个不剩。
+
+```bash
+python3 <技能>/scripts/native.py svg2png 图.svg 图.png   # 它会先展开箭头
+python3 <技能>/scripts/svg_marker.py 图.svg              # 或单独展开成 图.arrows.svg
+```
+
+判断方法：打开 SVG 搜 `marker-end`，有几处就该有几个箭头；一个都没有就是被抹掉了。
+
 ### `sandbox initialization failed`
 
 `qlmanage` 在无 GUI 会话、或被沙箱限制时出不了图。**不影响 `sips` 那条路**：
@@ -124,8 +136,15 @@ python3 -m venv ~/.venvs/legal && ~/.venvs/legal/bin/pip install openpyxl
 
 ### `doctor` 说缺 `cairosvg`，但图都出得来
 
-因为出图走的是 `sips`，不走 cairosvg。cairosvg 只在**上游脚本自己 import 它**
-的路径上需要。要出 PDF 版简表、或要批量转图时再装。
+因为**出 PNG** 走的是 `sips`（外加箭头展开），不走 cairosvg。缺 cairosvg 只影响一件事：
+**矢量 PDF**。`sips -s format pdf` 出的是位图（`/Font 0`，放大就糊、条文搜不到），
+而 `mqc-chronicle-master` 的「简表 PDF」是 `cairosvg.svg2pdf` 出的，那份是要交法院的。
+
+所以：只出 PNG 用，可以不装；要出一份能检索、能放大的 PDF，必须装。
+
+```bash
+python3 -m pip install cairosvg
+```
 
 ### 缺 `openpyxl`
 

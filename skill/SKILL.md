@@ -3,7 +3,7 @@ name: legal-case-flow
 description: 法律事务的编排层。当一个案子要把多个法律可视化模块串起来跑（事实底稿 → 法律关系图 → 庭审对抗图 → 时间轴 → 课件 → 数据图），或者不确定这次该从哪一步开始、上一步该交什么给下一步、缺了某个模块还能不能跑时使用。按能力角色探测本机已装模块并绑定，给出阶段计划与两处交接骨架；不代替任何模块干活，也不做法律判断。目标机器是 macOS，依赖一律先用系统自带的（sips / PDFKit / textutil），第三方那套只作备用。触发词：把这些技能串起来、从哪一步开始、案件的图怎么排、大事记接关系图、编排、pipeline、工作流、移植到 mac。
 tags: [legal, orchestration, pipeline, 编排, 交接, macos]
 metadata:
-  version: 1.0.1
+  version: 1.0.2
   upstream_policy: 只读不改，按角色探测绑定
   platform: macOS 优先，原生工具优先；Linux 那套作备用
 ---
@@ -25,8 +25,9 @@ metadata:
 
 | 要干的事 | mac 原生 | 一条命令 | 原来那套（**备用**，只在原生不够时） |
 | --- | --- | --- | --- |
-| SVG → PNG | `sips`（ImageIO 直接吃 SVG） | `sips -s format png 图.svg --out 图.png` | cairosvg / rsvg-convert / `soffice --convert-to png` |
-| SVG → 更大尺寸 PNG | `qlmanage -t -s 2400` | 见 `native.py svg2png 图.svg 图.png --size 2400` | 同上 |
+| SVG → PNG | `sips`（ImageIO 直接吃 SVG） | `native.py svg2png 图.svg 图.png` | cairosvg / rsvg-convert / `soffice --convert-to png` |
+| SVG → 更大尺寸 PNG | `qlmanage -t -s 2400` | `native.py svg2png 图.svg 图.png --size 2400` | 同上 |
+| **SVG → 矢量 PDF** | **顶不了**（sips 出的是位图） | 只能用 `cairosvg.svg2pdf` | — |
 | PDF 页数 / 全文文字 | `osascript` + PDFKit | `native.py pdftext 卷.pdf` | poppler：`pdfinfo` / `pdftotext` |
 | PDF 首页 → PNG | `sips --resampleWidth 1600` | `native.py pdf2png 卷.pdf 目录/` | `pdftoppm`（**逐页**只能用它） |
 | .docx 取文字 | `textutil` | `textutil -convert txt -output x.txt 材料.docx` | python-docx（取文字时不必装） |
@@ -35,11 +36,24 @@ metadata:
 | 被 Gatekeeper 拦 | `xattr` | `xattr -dr com.apple.quarantine 目录` | 手动去隐私设置点允许 |
 
 ```bash
-python3 <本技能目录>/scripts/native.py check      # 这台机器上哪些原生能用，顺手实测 PDF 与 SVG 两条路
+python3 <本技能目录>/scripts/native.py check      # 这台机器上哪些原生能用，顺手实测 PDF 与 SVG（带箭头）两条路
 python3 <本技能目录>/scripts/native.py clean 目录 # 打包前清 .DS_Store 与 ._ 分身
 ```
 
-`sips` 转出来的图，中文、配色、透明背景都对，实测与原 SVG 一致——**这就是 mac 上出 PNG 的正路**，不必为这一件事装 LibreOffice。
+`sips` 转出来的图，中文、配色、透明背景都对，**除了箭头**——`sips` 不实现 SVG 的 `<marker>`，而法律关系图、庭审对抗图、重画模块的方向全靠 `marker-end`。直转一次，11 条连接线的箭头一个不剩，线成了光头，而「谁指向谁」在这个行当里是有法律意义的。所以：
+
+```bash
+python3 <本技能目录>/scripts/native.py svg2png 图.svg 图.png   # 它会先展开箭头再转
+```
+
+`native.py svg2png` 会调同目录的 `svg_marker.py`（261 行、零依赖）把每个箭头按端点切线贴成真实三角形，再去掉 `marker-end` 属性，然后交给 `sips`。想单独用：
+
+```bash
+python3 scripts/svg_marker.py 图.svg                  # → 图.arrows.svg
+python3 scripts/svg_marker.py 图.svg 出.svg --png 出.png
+```
+
+没有箭头的图会原样返回，不生成多余文件，放进任何管线里都无副作用。**但别直接敲 `sips`**——那一条命令只对普通插图成立。
 
 ## 不要再走的弯路
 
@@ -50,7 +64,9 @@ python3 <本技能目录>/scripts/native.py clean 目录 # 打包前清 .DS_Stor
 | 别这么做 | 为什么错 | 该怎么做 |
 | --- | --- | --- |
 | 为了 `pdftotext` 装 `brew install poppler` | PDFKit 是系统自带的，一条 osascript 就能取全文 | `native.py pdftext`；**只有扫描件逐页栅格化**才装 poppler |
-| 为了 SVG→PNG 装 LibreOffice 或 cairosvg | `sips` 一条命令就出图，中文配色都对 | `sips -s format png`；放大再上 `qlmanage` |
+| 为了 SVG→PNG 装 LibreOffice 或 cairosvg | `sips` 一条命令就出图，中文配色都对 | `native.py svg2png`（会自动展开箭头）；放大再上 `qlmanage` |
+| 直接用 `sips -s format png` 转关系图 | sips 不实现 `<marker>`，11 个箭头全丢，线成光头 | 走 `native.py svg2png`，或先 `svg_marker.py 图.svg` |
+| 以为 `sips -s format pdf` 能出矢量 PDF | 它是把整张图栅格化成 JPEG 塞进 PDF，`/Font 0`，放大就糊、条文搜不到 | 矢量 PDF 只能用 `cairosvg.svg2pdf`，这一项别指望系统自带 |
 | 直接用 `/usr/bin/python3` | 没装 Command Line Tools 会弹窗让你下 2 GB，脚本看着像“卡住” | 先 `xcode-select -p`；用托管解释器或 python.org 那份的绝对路径 |
 | `sudo pip install` 或装进系统 Python | mac 上直接报 `externally-managed-environment`，装进去也会被系统更新冲掉 | 装进 venv：`<venv>/bin/python -m pip install ...`，不加 sudo |
 | `which node` 不到就以为没 node | WorkBuddy 托管的 node 不在 PATH 里，但能直接用 | 用绝对路径：`~/.workbuddy/binaries/node/versions/*/bin/node` |

@@ -100,7 +100,8 @@ python3 ~/.workbuddy/skills/legal-case-flow/scripts/handoff.py matrix \
 | [`bind.py`](docs/commands.md#bindpy--角色探测) | 角色探测：谁绑在哪、缺谁、为什么缺 |
 | [`handoff.py`](docs/commands.md#handoffpy--两处机械转接) | 两处机械转接：底稿 → 对抗图输入 / 关系图输入 |
 | [`pack.py`](docs/commands.md#packpy--打包校验安装体检) | 打包、校验、安装、依赖体检 |
-| [`native.py`](docs/commands.md#nativepy--macos-原生替身) | macOS 原生替身：sips 出图、PDFKit 读 PDF |
+| [`native.py`](docs/commands.md#nativepy--macos-原生替身) | macOS 原生替身：sips 出图（自动补箭头）、PDFKit 读 PDF |
+| [`svg_marker.py`](docs/commands.md#nativepy--macos-原生替身) | 把 `<marker>` 箭头展开成真实图形——`sips` 不认它 |
 
 全部零第三方依赖，`python3 <脚本> -h` 看用法。完整参数表见 **[docs/commands.md](docs/commands.md)**。
 
@@ -110,10 +111,11 @@ python3 ~/.workbuddy/skills/legal-case-flow/scripts/handoff.py matrix \
 
 | 要干的事 | 系统自带 | 原来那套（备用） |
 | --- | --- | --- |
-| SVG → PNG | `sips` | cairosvg / rsvg / soffice |
+| SVG → PNG | `sips` + 自带的 `svg_marker.py` | cairosvg / rsvg / soffice |
 | PDF 页数与全文 | `osascript` + PDFKit | pdfinfo / pdftotext |
 | PDF 首页转图 | `sips --resampleWidth` | pdftoppm |
 | .docx 取文字 | `textutil` | python-docx（仅读文字时） |
+| **SVG → 矢量 PDF** | **顶不了**（出的是位图） | cairosvg（要交法院的 PDF 只能用它） |
 
 **唯一值得为它装 Homebrew 的只有「扫描件逐页栅格化」**（`pdftoppm`）。
 其余在 mac 上都可以不装。详见 **[docs/macos-native.md](docs/macos-native.md)**，
